@@ -1,11 +1,40 @@
-import { GOOGLE_API_URL_BASE } from '@/config/env';
+import { API_HOST_BASE, API_PREFIX, GOOGLE_API_HOST_BASE } from '@/config/env';
 
+/**
+ * Construye la URL final integrando:
+ * Host Base (sin /api) + Prefijo '/api' + Ruta del Endpoint
+ *
+ * Ejemplos:
+ * - Local con VITE_URL_BASE vacía:
+ *     buildApiUrl('/docs')        -> '/api/docs'
+ *     buildApiUrl('/auth/login')  -> '/api/auth/login'
+ * - Producción en Railway con VITE_URL_BASE="https://mi-backend.up.railway.app":
+ *     buildApiUrl('/docs')        -> 'https://mi-backend.up.railway.app/api/docs'
+ * - Prevención de duplicación accidental:
+ *     buildApiUrl('/api/docs')    -> 'https://mi-backend.up.railway.app/api/docs'
+ */
 export function buildApiUrl(endpoint) {
+  if (!endpoint) {
+    return `${API_HOST_BASE}${API_PREFIX}`;
+  }
+
+  // Si ya es una URL absoluta externa (http:// o https://), se respeta intacta
   if (/^https?:\/\//i.test(endpoint)) {
     return endpoint;
   }
-  const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${GOOGLE_API_URL_BASE}${normalizedEndpoint}`;
+
+  // Asegura que empiece con barra
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+
+  // Si el endpoint ya trae '/api' al principio, lo removemos para evitar '/api/api'
+  if (cleanEndpoint.toLowerCase().startsWith('/api/')) {
+    cleanEndpoint = cleanEndpoint.slice(4);
+  } else if (cleanEndpoint.toLowerCase() === '/api') {
+    cleanEndpoint = '';
+  }
+
+  const baseHost = GOOGLE_API_HOST_BASE || API_HOST_BASE || '';
+  return `${baseHost}${API_PREFIX}${cleanEndpoint}`;
 }
 
 export async function apiFetch(endpoint, options = {}) {

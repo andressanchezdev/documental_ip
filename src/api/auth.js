@@ -1,9 +1,9 @@
 import { AUTH_LOGIN_ENDPOINT } from '@/config/env';
-import { apiFetch } from './client';
+import { apiFetch, buildApiUrl } from './client';
 
 /**
  * Realiza el Login mediante petición POST enviando email y password
- * hacia el endpoint configurado en VITE_URL_BASE.
+ * hacia el endpoint de autenticación.
  *
  * @param {string} email
  * @param {string} password
@@ -11,14 +11,20 @@ import { apiFetch } from './client';
 export async function loginWithEmail(email, password) {
   const cleanEmail = email.trim();
 
-  const response = await fetch(AUTH_LOGIN_ENDPOINT, {
+  // Si AUTH_LOGIN_ENDPOINT fue personalizado por variable de entorno, se usa esa;
+  // de lo contrario, se construye con buildApiUrl('/auth/login')
+  const targetUrl = import.meta.env.VITE_AUTH_LOGIN_PATH
+    ? AUTH_LOGIN_ENDPOINT
+    : buildApiUrl('/auth/login');
+
+  const response = await fetch(targetUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       email: cleanEmail,
-      username: cleanEmail, // Compatibilidad si el endpoint externo aún lee username
+      username: cleanEmail, // Compatibilidad si el backend lee username
       password,
     }),
   });
@@ -38,4 +44,3 @@ export async function loginWithEmail(email, password) {
 export async function getMyDrivePermissions() {
   return apiFetch('/permissions/me');
 }
-
