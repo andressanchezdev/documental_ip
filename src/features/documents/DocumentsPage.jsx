@@ -6,15 +6,16 @@ import { DocumentPreview } from './DocumentPreview';
 import { DocumentEditor } from './DocumentEditor';
 import { SheetEditor } from './SheetEditor';
 import { FolderPermissionsModal } from '@/features/permissions/FolderPermissionsModal';
-import { Eye, Edit3, LogOut, FileSearch, Download, Loader2, Shield } from 'lucide-react';
+import { Eye, Edit3, FileSearch, Download, Loader2 } from 'lucide-react';
 
 export function DocumentsPage() {
-  const { user, logout, canRead, canEdit, canStorage, isAdmin, refreshPermissions } = useAuth();
+  const { canRead, canEdit, canStorage, refreshPermissions } = useAuth();
   const [docs, setDocs] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [mode, setMode] = useState('preview');
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [folderRefreshTrigger, setFolderRefreshTrigger] = useState(0);
 
   const isSpreadsheet = isSpreadsheetDoc(selectedDoc);
 
@@ -92,29 +93,6 @@ export function DocumentsPage() {
             {canEdit && <span style={styles.pillEdit}>Edición</span>}
             {canStorage && <span style={styles.pillStorage}>Almacenamiento</span>}
           </div>
-
-          {isAdmin && (
-            <button
-              onClick={() => setShowPermissionsModal(true)}
-              style={styles.permissionsBtn}
-              title="Gestionar permisos de Lectura, Edición, Almacenamiento y Carpetas por usuario"
-            >
-              <Shield size={14} color="#2563eb" />
-              <span>Permisos Drive</span>
-            </button>
-          )}
-
-          <span style={{ fontSize: '0.82rem', color: '#475569' }}>
-            {user?.email || user?.username} (
-            <strong style={{ textTransform: 'uppercase', fontSize: '0.72rem' }}>
-              {user?.role || 'usuario'}
-            </strong>
-            )
-          </span>
-
-          <button onClick={logout} style={styles.logoutBtn}>
-            <LogOut size={15} /> Cerrar Sesión
-          </button>
         </div>
       </header>
 
@@ -133,6 +111,7 @@ export function DocumentsPage() {
           }}
           onRefreshDocs={loadDocs}
           onOpenPermissions={() => setShowPermissionsModal(true)}
+          refreshTrigger={folderRefreshTrigger}
         />
 
         <main style={styles.main}>
@@ -243,6 +222,7 @@ export function DocumentsPage() {
         onSaved={() => {
           refreshPermissions();
           loadDocs();
+          setFolderRefreshTrigger((prev) => prev + 1);
         }}
       />
     </div>

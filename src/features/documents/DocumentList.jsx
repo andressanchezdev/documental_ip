@@ -16,6 +16,8 @@ import {
   ChevronRight,
   ArrowLeft,
   Search,
+  LogOut,
+  User,
 } from 'lucide-react';
 
 export function isSpreadsheetDoc(doc) {
@@ -39,8 +41,9 @@ export function DocumentList({
   onDocUploaded,
   onRefreshDocs,
   onOpenPermissions,
+  refreshTrigger,
 }) {
-  const { canStorage, isAdmin } = useAuth();
+  const { user, logout, canStorage, isAdmin } = useAuth();
   const fileInputRef = useRef(null);
   const [folders, setFolders] = useState([]);
   const [currentFolderId, setCurrentFolderId] = useState(null); // null = Mi Unidad (Raíz)
@@ -61,7 +64,7 @@ export function DocumentList({
 
   useEffect(() => {
     loadFolders();
-  }, []);
+  }, [refreshTrigger]);
 
   // Mapa rápido de carpetas conocidas por ID
   const folderMap = useMemo(() => {
@@ -438,6 +441,43 @@ export function DocumentList({
       </div>
 
       <StorageWidget />
+
+      {/* Footer del Side Menu con Permisos Drive, Usuario y Cerrar Sesión */}
+      <div style={styles.footerContainer}>
+        {isAdmin && (
+          <button
+            onClick={onOpenPermissions}
+            style={styles.adminPermBtn}
+            title="Gestionar permisos de Lectura, Edición, Almacenamiento y Carpetas por usuario"
+          >
+            <Shield size={14} color="#2563eb" />
+            <span>Permisos Drive</span>
+          </button>
+        )}
+
+        <div style={styles.userProfileRow}>
+          <div style={styles.userAvatar}>
+            <User size={15} color="#475569" />
+          </div>
+
+          <div style={styles.userInfo}>
+            <span style={styles.userEmail} title={user?.email || user?.username}>
+              {user?.email || user?.username}
+            </span>
+            <span style={styles.userRoleBadge}>
+              {user?.role || 'usuario'}
+            </span>
+          </div>
+
+          <button
+            onClick={logout}
+            style={styles.footerLogoutBtn}
+            title="Cerrar Sesión"
+          >
+            <LogOut size={14} />
+          </button>
+        </div>
+      </div>
     </aside>
   );
 }
@@ -612,5 +652,85 @@ const styles = {
     fontSize: '0.71rem',
     color: '#94a3b8',
     marginTop: '0.12rem',
+  },
+  footerContainer: {
+    borderTop: '1px solid #e2e8f0',
+    padding: '0.65rem 0.75rem',
+    backgroundColor: '#fafafa',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+  },
+  adminPermBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.45rem',
+    width: '100%',
+    padding: '0.45rem 0.75rem',
+    backgroundColor: '#eff6ff',
+    border: '1px solid #bfdbfe',
+    borderRadius: '6px',
+    color: '#1d4ed8',
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+  },
+  userProfileRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+    padding: '0.4rem 0.5rem',
+    borderRadius: '6px',
+    backgroundColor: '#fff',
+    border: '1px solid #e2e8f0',
+  },
+  userAvatar: {
+    width: '28px',
+    height: '28px',
+    borderRadius: '50%',
+    backgroundColor: '#f1f5f9',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  userInfo: {
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    flex: 1,
+    minWidth: 0,
+  },
+  userEmail: {
+    fontSize: '0.78rem',
+    fontWeight: 600,
+    color: '#1e293b',
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  userRoleBadge: {
+    fontSize: '0.65rem',
+    fontWeight: 700,
+    textTransform: 'uppercase',
+    color: '#64748b',
+    letterSpacing: '0.02em',
+  },
+  footerLogoutBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    borderRadius: '6px',
+    border: '1px solid #cbd5e1',
+    backgroundColor: '#fff',
+    color: '#64748b',
+    cursor: 'pointer',
+    transition: 'all 0.15s ease',
+    flexShrink: 0,
   },
 };
