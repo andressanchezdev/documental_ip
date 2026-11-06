@@ -6,8 +6,7 @@ import { DocumentPreview } from './DocumentPreview';
 import { DocumentEditor } from './DocumentEditor';
 import { SheetEditor } from './SheetEditor';
 import { FolderPermissionsModal } from '@/features/permissions/FolderPermissionsModal';
-import { ProductImageArrayModal } from './ProductImageArrayModal';
-import { Eye, Edit3, LogOut, FileSearch, Download, Loader2, Shield, Database } from 'lucide-react';
+import { Eye, Edit3, LogOut, FileSearch, Download, Loader2, Shield } from 'lucide-react';
 
 export function DocumentsPage() {
   const { user, logout, canRead, canEdit, canStorage, isAdmin, refreshPermissions } = useAuth();
@@ -16,7 +15,6 @@ export function DocumentsPage() {
   const [mode, setMode] = useState('preview');
   const [downloadingFormat, setDownloadingFormat] = useState(null);
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
-  const [showProductImageModal, setShowProductImageModal] = useState(false);
 
   const isSpreadsheet = isSpreadsheetDoc(selectedDoc);
 
@@ -94,17 +92,6 @@ export function DocumentsPage() {
             {canEdit && <span style={styles.pillEdit}>Edición</span>}
             {canStorage && <span style={styles.pillStorage}>Almacenamiento</span>}
           </div>
-
-          {canEdit && (
-            <button
-              onClick={() => setShowProductImageModal(true)}
-              style={styles.productImageBtn}
-              title="Probar envío de imagen a GCP y guardado de ruta JSON en productos.imagenArray (MySQL local)"
-            >
-              <Database size={14} color="#059669" />
-              <span>Productos / imagenArray</span>
-            </button>
-          )}
 
           {isAdmin && (
             <button
@@ -258,11 +245,6 @@ export function DocumentsPage() {
           loadDocs();
         }}
       />
-
-      <ProductImageArrayModal
-        isOpen={showProductImageModal}
-        onClose={() => setShowProductImageModal(false)}
-      />
     </div>
   );
 }
@@ -314,19 +296,6 @@ const styles = {
     backgroundColor: '#fffbeb',
     color: '#b45309',
     border: '1px solid #fde68a',
-  },
-  productImageBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.35rem',
-    background: '#ecfdf5',
-    border: '1px solid #a7f3d0',
-    borderRadius: '6px',
-    padding: '0.35rem 0.75rem',
-    fontSize: '0.8rem',
-    cursor: 'pointer',
-    color: '#047857',
-    fontWeight: 600,
   },
   permissionsBtn: {
     display: 'flex',

@@ -65,13 +65,6 @@ export function LoginPage() {
         <button type="submit" disabled={submitting} style={styles.button}>
           {submitting ? 'Verificando cuenta...' : 'Iniciar Sesión'}
         </button>
-
-        <div style={styles.helperBox}>
-          <span style={{ fontWeight: 600 }}>Cuentas de prueba locales:</span>
-          <span>admin@empresa.com / admin123</span>
-          <span>editor@empresa.com / editor123</span>
-          <span>lector@empresa.com / lector123</span>
-        </div>
       </form>
     </div>
   );
