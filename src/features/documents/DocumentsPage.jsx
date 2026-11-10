@@ -19,6 +19,18 @@ export function DocumentsPage() {
 
   const isSpreadsheet = isSpreadsheetDoc(selectedDoc);
 
+  const handleDocMoved = useCallback((fileId, targetFolderId) => {
+    setDocs((prevDocs) =>
+      prevDocs.map((doc) => {
+        if (doc.id === fileId) {
+          const newParents = targetFolderId ? [targetFolderId] : [];
+          return { ...doc, parents: newParents };
+        }
+        return doc;
+      })
+    );
+  }, []);
+
   const loadDocs = useCallback(async () => {
     try {
       const data = await apiFetch('/docs');
@@ -85,15 +97,6 @@ export function DocumentsPage() {
           <FileSearch size={20} color="#2563eb" />
           <span>Gestor Documental</span>
         </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          {/* Indicadores de permisos activos sobre Drive */}
-          <div style={styles.permPills}>
-            {canRead && <span style={styles.pillRead}>Lectura</span>}
-            {canEdit && <span style={styles.pillEdit}>Edición</span>}
-            {canStorage && <span style={styles.pillStorage}>Almacenamiento</span>}
-          </div>
-        </div>
       </header>
 
       <div style={styles.workspace}>
@@ -109,6 +112,7 @@ export function DocumentsPage() {
             setSelectedDoc(newDoc);
             setMode('preview');
           }}
+          onDocMoved={handleDocMoved}
           onRefreshDocs={loadDocs}
           onOpenPermissions={() => setShowPermissionsModal(true)}
           refreshTrigger={folderRefreshTrigger}

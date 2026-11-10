@@ -39,6 +39,7 @@ export function DocumentList({
   selectedDoc,
   onSelectDoc,
   onDocUploaded,
+  onDocMoved,
   onRefreshDocs,
   onOpenPermissions,
   refreshTrigger,
@@ -182,15 +183,19 @@ export function DocumentList({
     }
   };
 
-  // Drag & Drop handlers
+  // Drag & Drop handlers con respuesta inmediata
   const onDragStart = (e, docId) => {
     e.dataTransfer.setData('text/plain', docId);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
   const onDragOver = (e, targetId) => {
     if (!canStorage) return;
     e.preventDefault();
-    setDragOverTarget(targetId);
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverTarget !== targetId) {
+      setDragOverTarget(targetId);
+    }
   };
 
   const onDragLeave = () => {
@@ -204,13 +209,28 @@ export function DocumentList({
     const fileId = e.dataTransfer.getData('text/plain');
     if (!fileId) return;
 
+    const currentNormalized = currentFolderId || '';
+    const targetNormalized = targetFolderId || '';
+    if (currentNormalized === targetNormalized) {
+      return;
+    }
+
+    // 1. Reflejo inmediato e instantáneo en la interfaz (optimistic update)
+    if (onDocMoved) {
+      onDocMoved(fileId, targetFolderId);
+    }
+
+    // 2. Persistir movimiento en Google Drive y auditoría en BD en segundo plano
     try {
       await apiFetch(`/docs/${fileId}/move`, {
         method: 'PUT',
         body: JSON.stringify({ target_folder_id: targetFolderId }),
       });
+      // Sincronización suave con el servidor en segundo plano
       if (onRefreshDocs) onRefreshDocs();
     } catch (err) {
+      // Si ocurre un error, revertir recargando los datos
+      if (onRefreshDocs) onRefreshDocs();
       alert(`Error al mover archivo: ${err.message}`);
     }
   };
@@ -309,8 +329,19 @@ export function DocumentList({
                 breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].id : null;
               setCurrentFolderId(parentId);
             }}
-            style={styles.backBtn}
-            title="Subir un nivel"
+            onDragOver={(e) => onDragOver(e, 'back-parent')}
+            onDragLeave={onDragLeave}
+            onDrop={(e) => {
+              const parentId =
+                breadcrumbs.length > 1 ? breadcrumbs[breadcrumbs.length - 2].id : '';
+              onDrop(e, parentId || '');
+            }}
+            style={{
+              ...styles.backBtn,
+              backgroundColor: dragOverTarget === 'back-parent' ? '#dbeafe' : '#f8fafc',
+              borderColor: dragOverTarget === 'back-parent' ? '#2563eb' : '#cbd5e1',
+            }}
+            title="Subir un nivel (o suelta un archivo aquí para mover a la carpeta superior)"
           >
             <ArrowLeft size={13} />
           </button>
@@ -326,8 +357,10 @@ export function DocumentList({
             fontWeight: !currentFolderId ? 700 : 500,
             color: !currentFolderId ? '#2563eb' : '#475569',
             backgroundColor: dragOverTarget === 'root' ? '#dbeafe' : 'transparent',
+            outline: dragOverTarget === 'root' ? '2px dashed #2563eb' : 'none',
+            borderRadius: '4px',
           }}
-          title="Ir a Mi Unidad ( o suelta un archivo aquí para moverlo a la raíz )"
+          title="Ir a Mi Unidad (o suelta un archivo aquí para moverlo a la raíz)"
         >
           <Home size={13} />
           <span>Mi Unidad</span>
@@ -348,6 +381,8 @@ export function DocumentList({
                   fontWeight: isCurrent ? 700 : 500,
                   color: isCurrent ? '#2563eb' : '#475569',
                   backgroundColor: dragOverTarget === crumb.id ? '#dbeafe' : 'transparent',
+                  outline: dragOverTarget === crumb.id ? '2px dashed #2563eb' : 'none',
+                  borderRadius: '4px',
                 }}
               >
                 <span style={styles.crumbText}>{crumb.name}</span>
@@ -383,6 +418,8 @@ export function DocumentList({
                 ...styles.folderRow,
                 backgroundColor: dragOverTarget === f.id ? '#dbeafe' : '#f8fafc',
                 borderColor: dragOverTarget === f.id ? '#2563eb' : '#e2e8f0',
+                outline: dragOverTarget === f.id ? '2px dashed #2563eb' : 'none',
+                transition: 'all 0.15s ease',
               }}
               title="Haz clic para abrir carpeta o arrastra un documento aquí"
             >
